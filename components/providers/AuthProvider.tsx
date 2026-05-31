@@ -24,16 +24,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const supabase = createClient()
 
   useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      setUser(user)
-      if (user) {
-        const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+    // Leer sesión inicial
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      setUser(session?.user ?? null)
+      if (session?.user) {
+        const { data } = await supabase.from('profiles').select('*').eq('id', session.user.id).single()
         setProfile(data)
       }
       setLoading(false)
-    }
-    getUser()
+    })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setUser(session?.user ?? null)
@@ -43,6 +42,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         setProfile(null)
       }
+      setLoading(false)
     })
     return () => subscription.unsubscribe()
   }, [])
