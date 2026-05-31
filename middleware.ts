@@ -28,33 +28,18 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
-  // Rutas que requieren autenticación
   const protectedPaths = ['/predictions', '/profile']
-  const adminPaths = ['/admin']
   const authPaths = ['/login', '/register']
 
   const isProtected = protectedPaths.some((p) => pathname.startsWith(p))
-  const isAdmin = adminPaths.some((p) => pathname.startsWith(p))
   const isAuth = authPaths.some((p) => pathname.startsWith(p))
 
-  if (!user && (isProtected || isAdmin)) {
+  if (!user && isProtected) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
   if (user && isAuth) {
     return NextResponse.redirect(new URL('/', request.url))
-  }
-
-  if (isAdmin && user) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    if (profile?.role !== 'admin') {
-      return NextResponse.redirect(new URL('/', request.url))
-    }
   }
 
   return response
