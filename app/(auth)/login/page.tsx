@@ -29,13 +29,11 @@ export default function LoginPage() {
   const onSubmit = async (data: FormData) => {
     setLoading(true)
     try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      })
-      const json = await res.json()
-      if (!res.ok) throw new Error(json.error || 'Error al iniciar sesión')
+      const { createClient } = await import('@/lib/supabase/client')
+      const supabase = createClient()
+      const email = `${data.username.toLowerCase()}@prode2026.app`
+      const { error } = await supabase.auth.signInWithPassword({ email, password: data.password })
+      if (error) throw new Error('Usuario o contraseña incorrectos')
       toast('¡Bienvenido de vuelta! 🎉', 'success')
       router.push('/')
       router.refresh()

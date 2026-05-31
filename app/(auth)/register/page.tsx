@@ -44,6 +44,13 @@ export default function RegisterPage() {
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || 'Error al registrarse')
+
+      // Login directo desde el cliente para setear las cookies correctamente
+      const { createClient } = await import('@/lib/supabase/client')
+      const supabase = createClient()
+      const email = `${data.username.toLowerCase()}@prode2026.app`
+      await supabase.auth.signInWithPassword({ email, password: data.password })
+
       toast('¡Cuenta creada! Bienvenido al prode 🏆', 'gold')
       router.push('/')
       router.refresh()
