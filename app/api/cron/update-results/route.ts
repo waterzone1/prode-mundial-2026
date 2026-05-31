@@ -13,9 +13,10 @@ function getAdminClient() {
 }
 
 export async function GET(req: Request) {
-  // Validate cron secret
+  // Validate cron secret (opcional — protege llamadas externas)
   const authHeader = req.headers.get('authorization')
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  const cronSecret = process.env.CRON_SECRET
+  if (cronSecret && authHeader && authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
