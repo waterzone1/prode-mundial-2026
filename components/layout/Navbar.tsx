@@ -58,19 +58,19 @@ export function Navbar() {
           {profile ? (
             <>
               {profile.role === 'admin' && (
-                <Link href="/admin" className={cn(
+                <a href="/admin" className={cn(
                   'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
                   pathname.startsWith('/admin')
                     ? 'bg-gold-600/15 text-gold-400'
                     : 'text-dark-300 hover:text-white hover:bg-dark-800'
                 )}>
                   <Settings className="w-4 h-4" /> Admin
-                </Link>
+                </a>
               )}
-              <Link href="/profile" className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-dark-300 hover:text-white hover:bg-dark-800 transition-colors">
+              <a href="/profile" className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-dark-300 hover:text-white hover:bg-dark-800 transition-colors">
                 <User className="w-4 h-4" />
                 <span className="text-gold-400 font-medium">{profile.username}</span>
-              </Link>
+              </a>
               <button
                 onClick={signOut}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-dark-400 hover:text-red-400 hover:bg-dark-800 transition-colors"
@@ -80,8 +80,8 @@ export function Navbar() {
             </>
           ) : (
             <div className="flex items-center gap-2">
-              <Link href="/login" className="btn-outline text-sm px-3 py-1.5">Ingresar</Link>
-              <Link href="/register" className="btn-gold text-sm px-3 py-1.5">Registrarse</Link>
+              <a href="/login" className="btn-outline text-sm px-3 py-1.5">Ingresar</a>
+              <a href="/register" className="btn-gold text-sm px-3 py-1.5">Registrarse</a>
             </div>
           )}
         </div>
@@ -120,8 +120,8 @@ export function Navbar() {
               </button>
             ) : (
               <div className="flex gap-2">
-                <Link href="/login" onClick={() => setOpen(false)} className="btn-outline text-sm flex-1 text-center">Ingresar</Link>
-                <Link href="/register" onClick={() => setOpen(false)} className="btn-gold text-sm flex-1 text-center">Registrarse</Link>
+                <a href="/login" className="btn-outline text-sm flex-1 text-center">Ingresar</a>
+                <a href="/register" className="btn-gold text-sm flex-1 text-center">Registrarse</a>
               </div>
             )}
           </div>

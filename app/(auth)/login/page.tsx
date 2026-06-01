@@ -32,12 +32,14 @@ export default function LoginPage() {
       const { createClient } = await import('@/lib/supabase/client')
       const supabase = createClient()
       const email = `${data.username.toLowerCase()}@prode2026.app`
-      const { error } = await supabase.auth.signInWithPassword({ email, password: data.password })
+      console.log('Intentando login con:', email)
+      const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password: data.password })
+      console.log('Resultado:', { user: authData?.user?.id, error: error?.message })
       if (error) throw new Error('Usuario o contraseña incorrectos')
       toast('¡Bienvenido de vuelta! 🎉', 'success')
-      router.push('/')
-      router.refresh()
+      window.location.href = '/'
     } catch (e: any) {
+      console.error('Error login:', e)
       toast(e.message, 'error')
     } finally {
       setLoading(false)
