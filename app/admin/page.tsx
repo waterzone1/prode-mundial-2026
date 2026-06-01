@@ -5,6 +5,7 @@ import { AdminAuthGuard } from '@/components/providers/AdminAuthGuard'
 import { Card } from '@/components/ui/Card'
 import { ActivityLog } from '@/components/admin/ActivityLog'
 import { AdminActions } from '@/components/admin/AdminActions'
+import { sbFetch } from '@/lib/supabase/fetch'
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState({ users: 0, matches: 0, predictions: 0 })
@@ -12,18 +13,12 @@ export default function AdminDashboard() {
   const [settings, setSettings] = useState<any[]>([])
 
   useEffect(() => {
-    const session = JSON.parse(localStorage.getItem('supabase-session') || '{}')
-    const token = session.access_token
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    const headers = { apikey: key!, Authorization: `Bearer ${token}` }
-
     Promise.all([
-      fetch(`${url}/rest/v1/profiles?select=id`, { headers }).then(r => r.json()),
-      fetch(`${url}/rest/v1/matches?select=id`, { headers }).then(r => r.json()),
-      fetch(`${url}/rest/v1/live_predictions?select=id`, { headers }).then(r => r.json()),
-      fetch(`${url}/rest/v1/activity_log?select=*,profiles(username)&order=created_at.desc&limit=20`, { headers }).then(r => r.json()),
-      fetch(`${url}/rest/v1/settings?select=*`, { headers }).then(r => r.json()),
+      sbFetch('profiles', 'select=id'),
+      sbFetch('matches', 'select=id'),
+      sbFetch('live_predictions', 'select=id'),
+      sbFetch('activity_log', 'select=*,profiles(username)&order=created_at.desc&limit=20'),
+      sbFetch('settings', 'select=*'),
     ]).then(([users, matches, preds, logs, sets]) => {
       setStats({ users: users?.length || 0, matches: matches?.length || 0, predictions: preds?.length || 0 })
       setActivity(logs || [])
