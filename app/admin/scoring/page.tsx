@@ -2,16 +2,19 @@
 
 import { useEffect, useState } from 'react'
 import { AdminAuthGuard } from '@/components/providers/AdminAuthGuard'
+import { useAuth } from '@/components/providers/AuthProvider'
 import { ScoringRulesEditor } from '@/components/admin/ScoringRulesEditor'
 import { sbFetch } from '@/lib/supabase/fetch'
 import type { ScoringRule } from '@/types'
 
 function ScoringContent() {
+  const { loading: authLoading, user } = useAuth()
   const [rules, setRules] = useState<ScoringRule[]>([])
 
   useEffect(() => {
+    if (authLoading || !user) return
     sbFetch('scoring_rules', 'select=*&order=rule_name.asc').then(data => setRules(data || []))
-  }, [])
+  }, [authLoading, user])
 
   return (
     <div className="flex flex-col gap-6">

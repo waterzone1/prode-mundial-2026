@@ -14,6 +14,10 @@ interface Props { matches: Match[] }
 export function MatchManager({ matches: initial }: Props) {
   const { toast } = useToast()
   const [matches, setMatches] = useState(initial)
+
+  useEffect(() => {
+    setMatches(initial)
+  }, [initial])
   const [editId, setEditId] = useState<string | null>(null)
   const [editData, setEditData] = useState<Partial<Match>>({})
   const [saving, setSaving] = useState(false)

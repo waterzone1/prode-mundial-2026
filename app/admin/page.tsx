@@ -2,17 +2,20 @@
 
 import { useEffect, useState } from 'react'
 import { AdminAuthGuard } from '@/components/providers/AdminAuthGuard'
+import { useAuth } from '@/components/providers/AuthProvider'
 import { Card } from '@/components/ui/Card'
 import { ActivityLog } from '@/components/admin/ActivityLog'
 import { AdminActions } from '@/components/admin/AdminActions'
 import { sbFetch } from '@/lib/supabase/fetch'
 
 function DashboardContent() {
+  const { loading: authLoading, user } = useAuth()
   const [stats, setStats] = useState({ users: 0, matches: 0, predictions: 0 })
   const [activity, setActivity] = useState<any[]>([])
   const [settings, setSettings] = useState<any[]>([])
 
   useEffect(() => {
+    if (authLoading || !user) return
     Promise.all([
       sbFetch('profiles', 'select=id'),
       sbFetch('matches', 'select=id'),
@@ -24,7 +27,7 @@ function DashboardContent() {
       setActivity(logs || [])
       setSettings(sets || [])
     })
-  }, [])
+  }, [authLoading, user])
 
   const registrationEnabled = settings.find(s => s.key === 'registration_enabled')?.value !== 'false'
   const deadline = settings.find(s => s.key === 'initial_prediction_deadline')?.value || ''
