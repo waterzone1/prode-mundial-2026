@@ -29,14 +29,18 @@ export default function LoginPage() {
   const onSubmit = async (data: FormData) => {
     setLoading(true)
     try {
-      const { createBrowserClient } = await import('@supabase/ssr')
-      const supabase = createBrowserClient(
+      const { createClient } = await import('@supabase/supabase-js')
+      const supabase = createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
       )
       const email = `${data.username.toLowerCase()}@prode2026.app`
-      const { error } = await supabase.auth.signInWithPassword({ email, password: data.password })
+      const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password: data.password })
       if (error) throw new Error('Usuario o contraseña incorrectos')
+      // Guardar sesión manualmente en localStorage
+      if (authData.session) {
+        localStorage.setItem('supabase-session', JSON.stringify(authData.session))
+      }
       toast('¡Bienvenido de vuelta! 🎉', 'success')
       window.location.replace('/')
     } catch (e: any) {
