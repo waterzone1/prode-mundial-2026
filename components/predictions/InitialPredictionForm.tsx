@@ -87,9 +87,13 @@ export function InitialPredictionForm({ userId, groupMatches, existingPrediction
         predicted_away: parseInt(predictions[m.id].away),
       }))
 
+      const session = JSON.parse(localStorage.getItem('supabase-session') || '{}')
       const res = await fetch('/api/predictions/initial', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({ predictions: payload, champion }),
       })
       const json = await res.json()

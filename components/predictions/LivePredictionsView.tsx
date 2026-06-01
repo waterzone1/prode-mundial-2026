@@ -55,9 +55,13 @@ export function LivePredictionsView({ userId, matches, predictions }: Props) {
     }
     setPreds((prev) => ({ ...prev, [matchId]: { ...prev[matchId], saving: true } }))
     try {
+      const session = JSON.parse(localStorage.getItem('supabase-session') || '{}')
       const res = await fetch('/api/predictions/live', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({
           match_id: matchId,
           predicted_home: parseInt(p.home),
