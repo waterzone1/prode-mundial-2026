@@ -1,21 +1,29 @@
-import { createClient } from '@/lib/supabase/server'
-import { requireAdmin } from '@/lib/auth'
-import { redirect } from 'next/navigation'
+'use client'
+
+import { useEffect, useState } from 'react'
+import { AdminAuthGuard } from '@/components/providers/AdminAuthGuard'
 import { UserManager } from '@/components/admin/UserManager'
+import type { Profile } from '@/types'
 
-export default async function UsersPage() {
-  try { await requireAdmin() } catch { redirect('/') }
+export default function UsersPage() {
+  const [users, setUsers] = useState<Profile[]>([])
 
-  const supabase = createClient()
-  const { data: users } = await supabase
-    .from('profiles')
-    .select('*')
-    .order('created_at', { ascending: false })
+  useEffect(() => {
+    const session = JSON.parse(localStorage.getItem('supabase-session') || '{}')
+    const token = session.access_token
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    fetch(`${url}/rest/v1/profiles?select=*&order=created_at.desc`, {
+      headers: { apikey: key!, Authorization: `Bearer ${token}` }
+    }).then(r => r.json()).then(data => setUsers(data || []))
+  }, [])
 
   return (
-    <div className="flex flex-col gap-6">
-      <h1 className="text-xl font-bold text-white">Gestión de Usuarios</h1>
-      <UserManager users={users || []} />
-    </div>
+    <AdminAuthGuard>
+      <div className="flex flex-col gap-6">
+        <h1 className="text-xl font-bold text-white">Gestión de Usuarios</h1>
+        <UserManager users={users} />
+      </div>
+    </AdminAuthGuard>
   )
 }

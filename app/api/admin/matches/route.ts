@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
-import { requireAdmin } from '@/lib/auth'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@supabase/supabase-js'
 import { calculateScoresForMatch } from '@/lib/scoring'
 import { z } from 'zod'
 
@@ -20,29 +19,51 @@ const createSchema = z.object({
   status: z.enum(['scheduled', 'live', 'finished', 'postponed']).default('scheduled'),
 })
 
+function getAdminClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
+
+async function verifyAdmin(req: Request) {
+  const authHeader = req.headers.get('authorization')
+  if (!authHeader?.startsWith('Bearer ')) return null
+  const token = authHeader.replace('Bearer ', '')
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { global: { headers: { Authorization: `Bearer ${token}` } } }
+  )
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  if (profile?.role !== 'admin') return null
+  return user
+}
+
 export async function PATCH(req: Request) {
   try {
-    await requireAdmin()
+    const user = await verifyAdmin(req)
+    if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+
     const body = await req.json()
     const data = updateSchema.parse(body)
     const { id, ...updates } = data
 
-    const supabase = createClient()
-
-    // Check if was not finished before
-    const { data: before } = await supabase.from('matches').select('status').eq('id', id).single()
-
-    const { error } = await supabase.from('matches').update(updates).eq('id', id)
+    const admin = getAdminClient()
+    const { data: before } = await admin.from('matches').select('status').eq('id', id).single()
+    const { error } = await admin.from('matches').update(updates).eq('id', id)
     if (error) throw error
 
-    // If just marked as finished, calculate scores
     if (updates.status === 'finished' && before?.status !== 'finished') {
       await calculateScoresForMatch(id)
     }
 
-    await supabase.from('activity_log').insert({
+    await admin.from('activity_log').insert({
       action: 'update_match',
-      details: `Partido ${id} actualizado manualmente: ${JSON.stringify(updates)}`,
+      user_id: user.id,
+      details: `Partido ${id} actualizado: ${JSON.stringify(updates)}`,
     })
 
     return NextResponse.json({ ok: true })
@@ -53,18 +74,16 @@ export async function PATCH(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    await requireAdmin()
+    const user = await verifyAdmin(req)
+    if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+
     const body = await req.json()
     const data = createSchema.parse(body)
 
-    const supabase = createClient()
-    const { data: match, error } = await supabase
-      .from('matches')
-      .insert(data)
-      .select()
-      .single()
-
+    const admin = getAdminClient()
+    const { data: match, error } = await admin.from('matches').insert(data).select().single()
     if (error) throw error
+
     return NextResponse.json({ ok: true, match })
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 400 })

@@ -27,13 +27,18 @@ export function MatchManager({ matches: initial }: Props) {
     setEditData({ home_score: match.home_score, away_score: match.away_score, status: match.status })
   }
 
+  const getToken = () => {
+    const session = JSON.parse(localStorage.getItem('supabase-session') || '{}')
+    return session.access_token || ''
+  }
+
   const saveEdit = async () => {
     if (!editId) return
     setSaving(true)
     try {
       const res = await fetch('/api/admin/matches', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
         body: JSON.stringify({ id: editId, ...editData }),
       })
       if (!res.ok) throw new Error()
@@ -52,7 +57,7 @@ export function MatchManager({ matches: initial }: Props) {
     try {
       const res = await fetch('/api/admin/matches', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
         body: JSON.stringify(newMatch),
       })
       const json = await res.json()
