@@ -15,12 +15,14 @@ export function UserManager({ users: initial }: Props) {
   const [users, setUsers] = useState(initial)
   const [loading, setLoading] = useState<string | null>(null)
 
+  const getToken = () => JSON.parse(localStorage.getItem('supabase-session') || '{}').access_token || ''
+
   const changeRole = async (userId: string, role: 'admin' | 'user') => {
     setLoading(userId)
     try {
       const res = await fetch('/api/admin/users', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
         body: JSON.stringify({ user_id: userId, role }),
       })
       if (!res.ok) throw new Error()
@@ -39,7 +41,7 @@ export function UserManager({ users: initial }: Props) {
     try {
       const res = await fetch('/api/admin/users', {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
         body: JSON.stringify({ user_id: userId }),
       })
       if (!res.ok) throw new Error()

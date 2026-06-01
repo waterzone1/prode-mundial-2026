@@ -17,19 +17,23 @@ export function ScoringRulesEditor({ rules: initialRules }: Props) {
   const [rules, setRules] = useState(initialRules)
   const [saving, setSaving] = useState<string | null>(null)
 
+  const getToken = () => JSON.parse(localStorage.getItem('supabase-session') || '{}').access_token || ''
+
   const updateRule = async (rule: ScoringRule) => {
     setSaving(rule.id)
     try {
       const res = await fetch('/api/admin/scoring', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
         body: JSON.stringify({ id: rule.id, points: rule.points, active: rule.active }),
       })
       if (!res.ok) throw new Error('Error')
       toast('Regla actualizada. Recalculando puntos...', 'success')
 
-      // Trigger recalculation
-      await fetch('/api/admin/recalculate', { method: 'POST' })
+      await fetch('/api/admin/recalculate', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${getToken()}` },
+      })
       toast('Puntos recalculados ✓', 'gold')
     } catch {
       toast('Error al guardar', 'error')

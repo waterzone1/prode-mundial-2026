@@ -18,12 +18,14 @@ export function AdminActions({ registrationEnabled, initialDeadline }: Props) {
   const [recalcLoading, setRecalcLoading] = useState(false)
   const [settingLoading, setSettingLoading] = useState(false)
 
+  const getToken = () => JSON.parse(localStorage.getItem('supabase-session') || '{}').access_token || ''
+
   const toggleRegistration = async () => {
     setSettingLoading(true)
     try {
       const res = await fetch('/api/admin/settings', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
         body: JSON.stringify({ key: 'registration_enabled', value: String(!regEnabled) }),
       })
       if (!res.ok) throw new Error('Error')
@@ -41,7 +43,7 @@ export function AdminActions({ registrationEnabled, initialDeadline }: Props) {
     try {
       const res = await fetch('/api/admin/settings', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
         body: JSON.stringify({ key: 'initial_prediction_deadline', value: deadline }),
       })
       if (!res.ok) throw new Error('Error')
@@ -57,7 +59,10 @@ export function AdminActions({ registrationEnabled, initialDeadline }: Props) {
     if (!confirm('¿Recalcular TODOS los puntos? Esto puede tardar unos segundos.')) return
     setRecalcLoading(true)
     try {
-      const res = await fetch('/api/admin/recalculate', { method: 'POST' })
+      const res = await fetch('/api/admin/recalculate', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${getToken()}` },
+      })
       if (!res.ok) throw new Error('Error')
       toast('Puntos recalculados correctamente ✓', 'success')
     } catch {

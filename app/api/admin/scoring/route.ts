@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
-import { requireAdmin } from '@/lib/auth'
-import { createClient } from '@/lib/supabase/server'
+import { verifyAdmin, getAdminClient } from '@/lib/api-auth'
 import { z } from 'zod'
 
 const schema = z.object({
@@ -11,12 +10,14 @@ const schema = z.object({
 
 export async function PATCH(req: Request) {
   try {
-    await requireAdmin()
+    const user = await verifyAdmin(req)
+    if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+
     const body = await req.json()
     const { id, points, active } = schema.parse(body)
 
-    const supabase = createClient()
-    const { error } = await supabase
+    const admin = getAdminClient()
+    const { error } = await admin
       .from('scoring_rules')
       .update({ points, active, updated_at: new Date().toISOString() })
       .eq('id', id)

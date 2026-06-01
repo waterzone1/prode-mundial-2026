@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server'
-import { requireAdmin } from '@/lib/auth'
+import { verifyAdmin } from '@/lib/api-auth'
 import { recalculateAllScores } from '@/lib/scoring'
 
-export async function POST() {
+export async function POST(req: Request) {
   try {
-    await requireAdmin()
+    const user = await verifyAdmin(req)
+    if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     await recalculateAllScores()
     return NextResponse.json({ ok: true })
   } catch (e: any) {
