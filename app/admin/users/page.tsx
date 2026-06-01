@@ -6,7 +6,7 @@ import { UserManager } from '@/components/admin/UserManager'
 import { sbFetch } from '@/lib/supabase/fetch'
 import type { Profile } from '@/types'
 
-export default function UsersPage() {
+function UsersContent() {
   const [users, setUsers] = useState<Profile[]>([])
 
   useEffect(() => {
@@ -14,11 +14,17 @@ export default function UsersPage() {
   }, [])
 
   return (
+    <div className="flex flex-col gap-6">
+      <h1 className="text-xl font-bold text-white">Gestión de Usuarios</h1>
+      <UserManager users={users} />
+    </div>
+  )
+}
+
+export default function UsersPage() {
+  return (
     <AdminAuthGuard>
-      <div className="flex flex-col gap-6">
-        <h1 className="text-xl font-bold text-white">Gestión de Usuarios</h1>
-        <UserManager users={users} />
-      </div>
+      <UsersContent />
     </AdminAuthGuard>
   )
 }

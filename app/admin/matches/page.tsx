@@ -4,9 +4,10 @@ import { useEffect, useState } from 'react'
 import { AdminAuthGuard } from '@/components/providers/AdminAuthGuard'
 import { MatchManager } from '@/components/admin/MatchManager'
 import { sbFetch } from '@/lib/supabase/fetch'
+import { useAuth } from '@/components/providers/AuthProvider'
 import type { Match } from '@/types'
 
-export default function MatchesPage() {
+function MatchesContent() {
   const [matches, setMatches] = useState<Match[]>([])
 
   useEffect(() => {
@@ -14,14 +15,20 @@ export default function MatchesPage() {
   }, [])
 
   return (
-    <AdminAuthGuard>
-      <div className="flex flex-col gap-6">
-        <div>
-          <h1 className="text-xl font-bold text-white">Gestión de Partidos</h1>
-          <p className="text-dark-400 text-sm mt-1">Cargá o corregí resultados manualmente.</p>
-        </div>
-        <MatchManager matches={matches} />
+    <div className="flex flex-col gap-6">
+      <div>
+        <h1 className="text-xl font-bold text-white">Gestión de Partidos</h1>
+        <p className="text-dark-400 text-sm mt-1">Cargá o corregí resultados manualmente.</p>
       </div>
+      <MatchManager matches={matches} />
+    </div>
+  )
+}
+
+export default function MatchesPage() {
+  return (
+    <AdminAuthGuard>
+      <MatchesContent />
     </AdminAuthGuard>
   )
 }

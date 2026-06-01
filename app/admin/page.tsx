@@ -7,7 +7,7 @@ import { ActivityLog } from '@/components/admin/ActivityLog'
 import { AdminActions } from '@/components/admin/AdminActions'
 import { sbFetch } from '@/lib/supabase/fetch'
 
-export default function AdminDashboard() {
+function DashboardContent() {
   const [stats, setStats] = useState({ users: 0, matches: 0, predictions: 0 })
   const [activity, setActivity] = useState<any[]>([])
   const [settings, setSettings] = useState<any[]>([])
@@ -30,21 +30,27 @@ export default function AdminDashboard() {
   const deadline = settings.find(s => s.key === 'initial_prediction_deadline')?.value || ''
 
   return (
-    <AdminAuthGuard>
-      <div className="flex flex-col gap-6">
-        <h1 className="text-xl font-bold text-white">Panel de Control</h1>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <StatCard emoji="👥" label="Usuarios" value={stats.users} />
-          <StatCard emoji="⚽" label="Partidos" value={stats.matches} />
-          <StatCard emoji="🎯" label="Pronósticos" value={stats.predictions} />
-          <StatCard emoji="✅" label="Sistema" value="OK" />
-        </div>
-        <AdminActions registrationEnabled={registrationEnabled} initialDeadline={deadline} />
-        <Card>
-          <h2 className="font-semibold text-white mb-4">Actividad Reciente</h2>
-          <ActivityLog logs={activity} />
-        </Card>
+    <div className="flex flex-col gap-6">
+      <h1 className="text-xl font-bold text-white">Panel de Control</h1>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <StatCard emoji="👥" label="Usuarios" value={stats.users} />
+        <StatCard emoji="⚽" label="Partidos" value={stats.matches} />
+        <StatCard emoji="🎯" label="Pronósticos" value={stats.predictions} />
+        <StatCard emoji="✅" label="Sistema" value="OK" />
       </div>
+      <AdminActions registrationEnabled={registrationEnabled} initialDeadline={deadline} />
+      <Card>
+        <h2 className="font-semibold text-white mb-4">Actividad Reciente</h2>
+        <ActivityLog logs={activity} />
+      </Card>
+    </div>
+  )
+}
+
+export default function AdminDashboard() {
+  return (
+    <AdminAuthGuard>
+      <DashboardContent />
     </AdminAuthGuard>
   )
 }
