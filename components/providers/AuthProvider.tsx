@@ -1,8 +1,7 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState } from 'react'
-import { createClient } from '@supabase/supabase-js'
-import type { User, Session } from '@supabase/supabase-js'
+import type { User } from '@supabase/supabase-js'
 import type { Profile } from '@/types'
 
 interface AuthContextType {
@@ -17,11 +16,21 @@ const AuthContext = createContext<AuthContextType>({
   signOut: async () => {},
 })
 
-function getSupabase() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+
+async function fetchProfile(userId: string, accessToken: string): Promise<Profile | null> {
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/profiles?select=*&id=eq.${userId}`,
+    {
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${accessToken}`,
+      },
+    }
   )
+  const data = await res.json()
+  return data?.[0] ?? null
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -30,59 +39,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const supabase = getSupabase()
-
-    const loadProfile = async (u: User) => {
-      const { data } = await supabase.from('profiles').select('*').eq('id', u.id).single()
-      setProfile(data)
+    const stored = localStorage.getItem('supabase-session')
+    if (!stored) {
+      setLoading(false)
+      return
     }
 
-    // Primero intentar restaurar sesión desde localStorage
-    const stored = localStorage.getItem('supabase-session')
-    if (stored) {
-      try {
-        const session: Session = JSON.parse(stored)
-        supabase.auth.setSession(session).then(async ({ data }) => {
-          if (data.session?.user) {
-            setUser(data.session.user)
-            await loadProfile(data.session.user)
-          } else {
-            localStorage.removeItem('supabase-session')
-          }
-          setLoading(false)
-        })
-      } catch {
+    try {
+      const session = JSON.parse(stored)
+      const now = Math.floor(Date.now() / 1000)
+
+      // Verificar que el token no esté vencido
+      if (session.expires_at && session.expires_at < now) {
         localStorage.removeItem('supabase-session')
         setLoading(false)
+        return
       }
-    } else {
-      supabase.auth.getSession().then(async ({ data: { session } }) => {
-        if (session?.user) {
-          setUser(session.user)
-          await loadProfile(session.user)
-        }
+
+      setUser(session.user)
+      fetchProfile(session.user.id, session.access_token).then((p) => {
+        setProfile(p)
         setLoading(false)
       })
+    } catch {
+      localStorage.removeItem('supabase-session')
+      setLoading(false)
     }
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setUser(session?.user ?? null)
-      if (session?.user) {
-        await loadProfile(session.user)
-        localStorage.setItem('supabase-session', JSON.stringify(session))
-      } else {
-        setProfile(null)
-        localStorage.removeItem('supabase-session')
-      }
-    })
-
-    return () => subscription.unsubscribe()
   }, [])
 
   const signOut = async () => {
-    const supabase = getSupabase()
+    const stored = localStorage.getItem('supabase-session')
+    if (stored) {
+      try {
+        const session = JSON.parse(stored)
+        await fetch(`${SUPABASE_URL}/auth/v1/logout`, {
+          method: 'POST',
+          headers: {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+        })
+      } catch {}
+    }
     localStorage.removeItem('supabase-session')
-    await supabase.auth.signOut()
+    setUser(null)
+    setProfile(null)
     window.location.href = '/'
   }
 
